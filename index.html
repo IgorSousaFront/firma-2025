@@ -7,40 +7,34 @@
   <body>
 
 <script>
-// Componente de Holograma Profissional com Shader e Glitch
+// --- O JAVASCRIPT DO SHADER PERMANECE IDÊNTICO ---
 AFRAME.registerComponent('hologram-glitch', {
   schema: {
-    color: { type: 'color', default: '#ff2200' }
+    color: { type: 'color', default: '#ffffff' }
   },
 
   init: function() {
-    // Uniforms: variáveis passadas do JS para o Shader
     this.uniforms = {
       time: { value: 0 },
       color: { value: new THREE.Color(this.data.color) },
-      glitchIntensity: { value: 0.0 } // Nova variável para controlar a força da falha
+      glitchIntensity: { value: 0.0 }
     };
 
-    // --- Variáveis de controle do Glitch no JS ---
-    this.glitchChance = 0.01;   // 1% de chance por frame de iniciar um glitch
-    this.isGlitching = false;   // Estado atual
-    this.glitchDuration = 0;    // Quanto tempo dura a falha atual
-    this.glitchTimer = 0;       // Cronômetro da falha atual
+    this.glitchChance = 0.008;
+    this.isGlitching = false;
+    this.glitchDuration = 0;
+    this.glitchTimer = 0;
 
-    // --- Funções auxiliares para Shaders (Ruído) ---
     const noiseChunk = `
-      // Função de ruído pseudo-aleatório padrão
       float rand(vec2 co){
           return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
       }
     `;
 
-    // --- Vertex Shader (Distorção Geométrica) ---
     const vertexShader = `
       ${noiseChunk}
       uniform float time;
       uniform float glitchIntensity;
-
       varying vec3 vNormal;
       varying vec3 vPosition;
       varying vec3 vViewPosition;
@@ -48,19 +42,13 @@ AFRAME.registerComponent('hologram-glitch', {
       void main() {
         vNormal = normalize(normalMatrix * normal);
         vec3 pos = position;
-
-        // Efeito Glitch Geométrico
         if (glitchIntensity > 0.0) {
-            // Cria "faixas" horizontais aleatórias baseadas na altura (Y) e no tempo
             float stripNoise = rand(vec2(floor(pos.y * 20.0), time * 15.0));
-            
-            // Se cair na faixa de ruído, desloca o vértice horizontalmente (X)
             if (stripNoise > 0.5) {
-                 float shift = (rand(vec2(time * 10.0, pos.y)) * 2.0 - 1.0); // -1 a 1
-                 pos.x += shift * glitchIntensity * 0.15; // Deslocamento
+                 float shift = (rand(vec2(time * 10.0, pos.y)) * 2.0 - 1.0);
+                 pos.x += shift * glitchIntensity * 0.15;
             }
         }
-
         vPosition = pos;
         vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
         vViewPosition = -mvPosition.xyz;
@@ -68,44 +56,29 @@ AFRAME.registerComponent('hologram-glitch', {
       }
     `;
 
-    // --- Fragment Shader (Cor e Textura) ---
     const fragmentShader = `
       ${noiseChunk}
       uniform float time;
       uniform vec3 color;
       uniform float glitchIntensity;
-
       varying vec3 vNormal;
       varying vec3 vPosition;
       varying vec3 vViewPosition;
 
       void main() {
-        // 1. Fresnel (Borda)
         vec3 normal = normalize(vNormal);
         vec3 viewDir = normalize(vViewPosition);
         float rim = pow(1.0 - abs(dot(normal, viewDir)), 2.5);
-
-        // 2. Scanlines
         float scanline = smoothstep(0.4, 0.6, sin(vPosition.y * 50.0 - time * 5.0));
-        
-        // 3. Pulsação
         float pulse = 0.8 + 0.2 * sin(time * 3.0);
-
-        // 4. Efeito Glitch na Cor/Alfa
         float glitchNoise = 0.0;
         vec3 glitchColorOffset = vec3(0.0);
         if (glitchIntensity > 0.0) {
-             // Ruído estático rápido
              glitchNoise = rand(vec2(gl_FragCoord.xy * time)) * glitchIntensity;
-             // Pisca para branco durante o glitch intenso
              glitchColorOffset = vec3(1.0) * glitchIntensity * rand(vec2(time));
         }
-
-        // Combinação
         float alpha = rim + (scanline * 0.2) + glitchNoise;
         vec3 finalColor = (color * pulse) + (color * rim * 2.0) + (vec3(1.0) * scanline * 0.3) + glitchColorOffset;
-
-        // Aumenta a opacidade geral durante um glitch forte para "estourar" a luz
         gl_FragColor = vec4(finalColor, alpha * clamp(pulse + glitchIntensity, 0.5, 1.2));
       }
     `;
@@ -129,32 +102,27 @@ AFRAME.registerComponent('hologram-glitch', {
     });
   },
 
-  // O loop de animação (roda todo frame)
   tick: function(t, dt) {
     if (!dt) return;
     const deltaSeconds = dt / 1000;
     this.uniforms.time.value += deltaSeconds;
 
-    // --- Lógica do Glitch Aleatório ---
     if (!this.isGlitching) {
-        // Tenta iniciar um glitch se não estiver ocorrendo um
         if (Math.random() < this.glitchChance) {
             this.isGlitching = true;
-            this.glitchDuration = 0.1 + Math.random() * 0.4; // Dura entre 0.1s e 0.5s
+            this.glitchDuration = 0.1 + Math.random() * 0.4;
             this.glitchTimer = 0;
         } else {
-             this.uniforms.glitchIntensity.value = 0.0; // Sem glitch
+             this.uniforms.glitchIntensity.value = 0.0;
         }
     }
 
     if (this.isGlitching) {
         this.glitchTimer += deltaSeconds;
         if (this.glitchTimer >= this.glitchDuration) {
-            // Fim do glitch
             this.isGlitching = false;
             this.uniforms.glitchIntensity.value = 0.0;
         } else {
-            // Durante o glitch, a intensidade varia loucamente para piscar
             this.uniforms.glitchIntensity.value = Math.random() * 0.9 + 0.1;
         }
     }
@@ -181,10 +149,10 @@ AFRAME.registerComponent('hologram-glitch', {
       <a-entity mindar-image-target="targetIndex: 0; targetWidth: 0.12">
         <a-gltf-model
           src="#modelo"
-          hologram-glitch="color: #00ffff"
-          scale="0.5 0.5 0.5"
+          hologram-glitch="color: #ffffff"
+          scale="0.6 0.6 0.6"
           position="0 0 0"
-          animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear">
+          rotate="90 0 0">
         </a-gltf-model>
       </a-entity>
 
