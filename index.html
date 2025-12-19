@@ -6,17 +6,65 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   </head>
   <body>
-    <a-scene 
-      mindar-image="imageTargetSrc: https://igorsousafront.github.io/firma-2025/assets/targets-v2.mind;filterMinCF: 0.0005; filterBeta: 5" 
-      color-space="sRGB"
+
+<script>
+AFRAME.registerComponent('hologram-scan', {
+  schema: {
+    color: { type: 'color', default: '#00e5ff' }
+  },
+
+  init() {
+    this.clock = new THREE.Clock();
+
+    this.el.addEventListener('model-loaded', () => {
+      const mesh = this.el.getObject3D('mesh');
+
+      mesh.traverse((node) => {
+        if (!node.isMesh) return;
+
+        const material = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(this.data.color),
+          transparent: true,
+          opacity: 0.6,
+          emissive: new THREE.Color(this.data.color),
+          emissiveIntensity: 2.8,
+          roughness: 0.15,
+          metalness: 0.0,
+          depthWrite: false
+        });
+
+        node.material = material;
+      });
+    });
+  },
+
+  tick() {
+    const t = this.clock.getElapsedTime();
+
+    this.el.object3D.traverse((node) => {
+      if (!node.isMesh) return;
+
+      // Flicker global
+      node.material.emissiveIntensity =
+        2.5 + Math.sin(t * 6.0) * 0.4;
+
+      // Scan horizontal real (linhas)
+      const scan =
+        Math.sin(t * 4.0 + node.position.y * 25.0) * 0.15;
+
+      node.material.opacity = 0.55 + scan;
+    });
+  }
+});
+</script>
+    <a-scene
+      mindar-image="imageTargetSrc: https://igorsousafront.github.io/firma-2025/assets/targets-v2.mind;
+                    filterMinCF: 0.001;
+                    filterBeta: 2.5;"
       embedded
-      renderer="colorManagement: true, physicallyCorrectLights" 
-      vr-mode-ui="enabled: false" 
-      device-orientation-permission-ui="enabled: false"
+      vr-mode-ui="enabled: false"
+      renderer="colorManagement: true; physicallyCorrectLights: true;"
     >
-      <!-- <a-assets>
-        <a-asset-item id="avatarModel" src="https://igorsousafront.github.io/firma-2025/assets/firma-logo.glb"></a-asset-item>
-      </a-assets> -->
 
       <a-assets>
         <a-asset-item
@@ -28,12 +76,117 @@
       <a-entity mindar-image-target="targetIndex: 0; targetWidth: 0.21">
         <a-gltf-model
           src="#modelo"
+          hologram-scan="color: #00ffff"
           scale="1 1 1"
-          position="0 0 0" rotation="90 0 0">
+          position="0 0 0">
         </a-gltf-model>
       </a-entity>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
     </a-scene>
   </body>
+</script>
 </html>
+
+<!-- <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>MindAR Holograma Scan</title>
+
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+
+<script>
+AFRAME.registerComponent('hologram-scan', {
+  schema: {
+    color: { type: 'color', default: '#00e5ff' }
+  },
+
+  init() {
+    this.clock = new THREE.Clock();
+
+    this.el.addEventListener('model-loaded', () => {
+      const mesh = this.el.getObject3D('mesh');
+
+      mesh.traverse((node) => {
+        if (!node.isMesh) return;
+
+        const material = new THREE.MeshStandardMaterial({
+          color: new THREE.Color(this.data.color),
+          transparent: true,
+          opacity: 0.6,
+          emissive: new THREE.Color(this.data.color),
+          emissiveIntensity: 2.8,
+          roughness: 0.15,
+          metalness: 0.0,
+          depthWrite: false
+        });
+
+        node.material = material;
+      });
+    });
+  },
+
+  tick() {
+    const t = this.clock.getElapsedTime();
+
+    this.el.object3D.traverse((node) => {
+      if (!node.isMesh) return;
+
+      // Flicker global
+      node.material.emissiveIntensity =
+        2.5 + Math.sin(t * 6.0) * 0.4;
+
+      // Scan horizontal real (linhas)
+      const scan =
+        Math.sin(t * 4.0 + node.position.y * 25.0) * 0.15;
+
+      node.material.opacity = 0.55 + scan;
+    });
+  }
+});
+</script>
+
+<a-scene
+  mindar-image="filterMinCF: 0.001; filterBeta: 10"
+  embedded
+  renderer="colorManagement: true; physicallyCorrectLights: false"
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false">
+
+  <a-assets>
+    <a-asset-item id="modelo" src="https://igorsousafront.github.io/firma-2025/assets/firma-logo.glb"></a-asset-item>
+  </a-assets>
+
+  <a-camera
+    position="0 0 0"
+    look-controls="enabled: false">
+  </a-camera>
+
+  <a-entity
+    mindar-image-target="targetIndex: 0; targetWidth: 0.21">
+
+    <a-gltf-model
+      src="#modelo"
+      hologram-scan="color: #00ffff"
+      scale="1 1 1"
+      position="0 0 0">
+    </a-gltf-model>
+
+  </a-entity>
+
+</a-scene>
+
+</body>
+</html> -->
