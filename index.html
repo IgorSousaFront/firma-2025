@@ -6,6 +6,19 @@
         console.log('redirecionou')
       }
     </script>
+    <script>
+  // Tenta forçar a câmera traseira padrão
+  const constraints = {
+    video: {
+      facingMode: { exact: "environment" },
+      // Tentar forçar uma proporção que a ultrawide geralmente não usa como primária
+      aspectRatio: { ideal: 1.7777777778 } 
+    }
+  };
+  
+  // O MindAR internamente chama o getUserMedia. 
+  // Forçar isso pode ajudar em alguns aparelhos.
+</script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -13,6 +26,7 @@
   <body>
 
 <script>
+
 AFRAME.registerComponent('hologram-glitch', {
   schema: {
     color: { type: 'color', default: '#ffffff' },
@@ -158,10 +172,14 @@ AFRAME.registerComponent('hologram-glitch', {
     <a-scene
       mindar-image="imageTargetSrc: https://igorsousafront.github.io/firma-2025/assets/targets-v2.mind; 
                     filterMinCF: 0.0001; 
-                    filterBeta: 0.001;"
+                    filterBeta: 0.001;
+                    warmupTolerance: 1;
+                    missTolerance: 5;"
+      inspector-plugin-recast
       embedded
-      vr-mode-ui="enabled: false"
       renderer="colorManagement: true; physicallyCorrectLights: true; antialias: true; alpha: true;"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
     >
 
       <a-assets>
@@ -171,12 +189,10 @@ AFRAME.registerComponent('hologram-glitch', {
         </a-asset-item>
       </a-assets>
 
-      <a-entity mindar-image-target="targetIndex: 0">
-        <a-plane color="red" opacity="0.5" position="0 0 0" height="1" width="1"></a-plane>
-
+      <a-entity mindar-image-target="targetIndex: 0; targetWidth: 0.21">
         <a-gltf-model
           src="#modelo"
-          hologram-glitch="color: #ffffff; loopSpeed: 0.3; minScale: 0.2; maxScale: 1.0"
+          hologram-glitch="color: #ffffff; loopSpeed: 0.3; minScale: 0.2; maxScale: 0.7"
           position="0 0 0" 
           rotation="0 0 0"
           scale="0.5 0.5 0.5"
@@ -184,7 +200,7 @@ AFRAME.registerComponent('hologram-glitch', {
         </a-gltf-model>
       </a-entity>
 
-      <a-camera position="0 0 0" look-controls="enabled: true"></a-camera>
+      <a-camera position="0 0 0" look-controls="enabled: false" wasd-controls="enabled: false"></a-camera>
     </a-scene>
   </body>
 </html>
