@@ -1,5 +1,11 @@
 <html>
   <head>
+    <script>
+      if (window.location.protocol === 'http:') {
+        window.location.href = window.location.href.replace('http:', 'https:');
+        console.log('redirecionou')
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -151,8 +157,8 @@ AFRAME.registerComponent('hologram-glitch', {
 
     <a-scene
       mindar-image="imageTargetSrc: https://igorsousafront.github.io/firma-2025/assets/targets-v2.mind; 
-                    filterMinCF: 0.001; 
-                    filterBeta: 2.5;"
+                    filterMinCF: 0.0001; 
+                    filterBeta: 0.001;"
       embedded
       vr-mode-ui="enabled: false"
       renderer="colorManagement: true; physicallyCorrectLights: true; antialias: true; alpha: true;"
@@ -165,13 +171,15 @@ AFRAME.registerComponent('hologram-glitch', {
         </a-asset-item>
       </a-assets>
 
-      <a-entity mindar-image-target="targetIndex: 0; targetWidth: 0.12">
+      <a-entity mindar-image-target="targetIndex: 0">
+        <a-plane color="red" opacity="0.5" position="0 0 0" height="1" width="1"></a-plane>
+
         <a-gltf-model
           src="#modelo"
-          hologram-glitch="color: #ffffff; loopSpeed: 1.0; minScale: 0.1; maxScale: 1.0"
-          scale="0.6 0.6 0.6"
-          position="0 0 0"
+          hologram-glitch="color: #ffffff; loopSpeed: 0.3; minScale: 0.2; maxScale: 1.0"
+          position="0 0 0" 
           rotation="0 0 0"
+          scale="0.5 0.5 0.5"
         >
         </a-gltf-model>
       </a-entity>
